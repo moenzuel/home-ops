@@ -1,0 +1,3 @@
+---
+providerRegex: ^(minis-1|nas-2-vm|nas-3-vm)$
+bypassDnsResolution: true
