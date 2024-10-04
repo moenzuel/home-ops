@@ -21,6 +21,40 @@ cniConfig:
   name: none
 
 nodes:
+  - hostname: "nas-2-vm"
+    ipAddress: "192.168.2.32"
+    installDisk: "/dev/vda"
+    talosImageURL: factory.talos.dev/installer/ebdfa27a8d6272acf806ac6a5c968c3c284a47ce880273cecb19442c11bf0474
+    controlPlane: true
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "6c:1f:f7:0c:ce:0a"
+        dhcp: false
+        addresses:
+          - "192.168.2.32/24"
+        routes:
+          - network: 0.0.0.0/0
+            gateway: "192.168.1.1"
+        mtu: 1500
+        vip:
+          ip: "192.168.2.254"
+  - hostname: "nas-3-vm"
+    ipAddress: "192.168.2.33"
+    installDisk: "/dev/vda"
+    talosImageURL: factory.talos.dev/installer/ebdfa27a8d6272acf806ac6a5c968c3c284a47ce880273cecb19442c11bf0474
+    controlPlane: true
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "52:54:00:31:65:21"
+        dhcp: false
+        addresses:
+          - "192.168.2.33/24"
+        routes:
+          - network: 0.0.0.0/0
+            gateway: "192.168.1.1"
+        mtu: 1500
+        vip:
+          ip: "192.168.2.254"
   - hostname: "minis-1"
     ipAddress: "192.168.2.21"
     installDisk: "/dev/nvme0n1"
@@ -34,47 +68,20 @@ nodes:
           - "192.168.2.21/24"
         routes:
           - network: 0.0.0.0/0
-            gateway: "192.168.2.1"
-        mtu: 1500
-        vip:
-          ip: "192.168.2.254"
-  - hostname: "nas-2-vm"
-    ipAddress: "192.168.2.32"
-    installDisk: "/dev/vda"
-    talosImageURL: factory.talos.dev/installer/743d53d3c9cc1942e0a3fc7167565665ea25823e6261d82bf022e9a9e50ed84d
-    controlPlane: true
-    networkInterfaces:
-      - deviceSelector:
-          hardwareAddr: "6c:1f:f7:0c:ce:0a"
-        dhcp: false
-        addresses:
-          - "192.168.2.32/24"
-        routes:
-          - network: 0.0.0.0/0
-            gateway: "192.168.2.1"
-        mtu: 1500
-        vip:
-          ip: "192.168.2.254"
-  - hostname: "nas-3-vm"
-    ipAddress: "192.168.2.33"
-    installDisk: "/dev/vda"
-    talosImageURL: factory.talos.dev/installer/743d53d3c9cc1942e0a3fc7167565665ea25823e6261d82bf022e9a9e50ed84d
-    controlPlane: true
-    networkInterfaces:
-      - deviceSelector:
-          hardwareAddr: "52:54:00:31:65:21"
-        dhcp: false
-        addresses:
-          - "192.168.2.33/24"
-        routes:
-          - network: 0.0.0.0/0
-            gateway: "192.168.2.1"
+            gateway: "192.168.1.1"
         mtu: 1500
         vip:
           ip: "192.168.2.254"
 
 # Global patches
 patches:
+  - # Configure NTP
+    |-
+    machine:
+      time:
+        disabled: false
+        servers:
+          - time.cloudflare.com
   - "@./patches/global/cluster-discovery.yaml"
   - "@./patches/global/containerd.yaml"
   - "@./patches/global/disable-search-domain.yaml"
