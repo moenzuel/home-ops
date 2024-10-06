@@ -76,6 +76,8 @@ tasks:
     preconditions:
       - msg: Missing kubeconfig
         sh: test -f {{.KUBECONFIG_FILE}}
+      - msg: Missing 1Password CLI access token environment variable
+        sh: test -n "$OP_SERVICE_ACCOUNT_TOKEN"
       - msg: Missing Github deploy key secret
         sh: op read op://HomeOps/github-deploy-key/k8-secret
 
@@ -86,5 +88,7 @@ tasks:
     preconditions:
       - msg: Missing kubeconfig
         sh: test -f {{.KUBECONFIG_FILE}}
+      - msg: Missing 1Password CLI access token environment variable
+        sh: test -n "$OP_SERVICE_ACCOUNT_TOKEN"
       - msg: Missing external-secrets deploy key secret
         sh: op read op://HomeOps/onepassword-connect/k8-secret
