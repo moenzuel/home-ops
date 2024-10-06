@@ -33,6 +33,8 @@ tasks:
     preconditions:
       - msg: Missing talhelper config file
         sh: test -f {{.TALHELPER_CONFIG_FILE}}
+      - msg: Missing 1Password CLI access token environment variable
+        sh: test -n "$OP_SERVICE_ACCOUNT_TOKEN"
       - msg: Missing 1Password vault access
         sh: op item get talos --vault HomeOps
 
