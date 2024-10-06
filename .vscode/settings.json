@@ -1,4 +1,8 @@
 {
+    "terminal.integrated.scrollback": 10000,
+    "editor.bracketPairColorization.enabled": true,
+    "editor.fontFamily": "'Monaspace Neon', monospace",
+    "editor.fontLigatures": true,
     "files.associations": {
         "*.json5": "jsonc",
         "./kubernetes/**/*.sops.toml": "plaintext"
