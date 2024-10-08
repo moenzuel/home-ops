@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - ./1password.yaml
   - ./actions-runner-controller.yaml
+  - ./backube.yaml
   - ./bjw-s.yaml
   - ./cilium.yaml
   - ./coredns.yaml
@@ -16,6 +17,7 @@ resources:
   - ./metrics-server.yaml
   - ./node-feature-discovery.yaml
   - ./openebs.yaml
+  - ./piraeus.yaml
   - ./postfinance.yaml
   - ./prometheus-community.yaml
   - ./spegel.yaml
