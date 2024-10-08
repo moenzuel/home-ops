@@ -33,4 +33,4 @@ spec:
       ingressClassName: internal
       annotations:
         nginx.ingress.kubernetes.io/proxy-body-size: 10000m
-      host: "{{ .Release.Name }}.${SECRET_DOMAIN}"
+      host: "longhorn.${SECRET_DOMAIN}"
