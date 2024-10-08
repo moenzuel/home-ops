@@ -38,6 +38,10 @@ nodes:
         mtu: 1500
         vip:
           ip: "192.168.2.254"
+    nodeAnnotations:
+      node.longhorn.io/default-disks-config: '[{"path":"/var/lib/longhorn","allowScheduling":true,"tags":["nvme"]}]'
+    nodeLabels:
+      node.longhorn.io/create-default-disk: config
   - hostname: "nas-3-vm"
     ipAddress: "192.168.2.33"
     installDisk: "/dev/vda"
@@ -55,6 +59,10 @@ nodes:
         mtu: 1500
         vip:
           ip: "192.168.2.254"
+    nodeAnnotations:
+      node.longhorn.io/default-disks-config: '[{"path":"/var/lib/longhorn","allowScheduling":true,"tags":["nvme"]}]'
+    nodeLabels:
+      node.longhorn.io/create-default-disk: config
   - hostname: "minis-1"
     ipAddress: "192.168.2.21"
     installDisk: "/dev/nvme0n1"
@@ -72,6 +80,10 @@ nodes:
         mtu: 1500
         vip:
           ip: "192.168.2.254"
+    nodeAnnotations:
+      node.longhorn.io/default-disks-config: '[{"path":"/var/lib/longhorn","allowScheduling":true,"tags":["nvme"]}]'
+    nodeLabels:
+      node.longhorn.io/create-default-disk: config
 
 # Global patches
 patches:
@@ -87,6 +99,7 @@ patches:
   - "@./patches/global/disable-search-domain.yaml"
   - "@./patches/global/hostdns.yaml"
   - "@./patches/global/kubelet.yaml"
+  - "@./patches/global/longhorn.yaml"
   - "@./patches/global/openebs-local.yaml"
   - "@./patches/global/sysctl.yaml"
 
