@@ -3,35 +3,32 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: tailscale-operator
+  name: &app tailscale-operator
 spec:
   interval: 30m
   chart:
     spec:
-      chart: ./cmd/k8s-operator/deploy/chart
+      chart: tailscale-operator
+      version: 1.74.1
       sourceRef:
-        kind: GitRepository
+        kind: HelmRepository
         name: tailscale
         namespace: flux-system
-  maxHistory: 2
   install:
     remediation:
       retries: 3
   upgrade:
     cleanupOnFail: true
     remediation:
+      strategy: rollback
       retries: 3
   uninstall:
     keepHistory: false
   values:
     operatorConfig:
-      image:
-        repo: tailscale/k8s-operator
-        tag: "v1.64.2"
-      logging: "info"
-      hostname: "tailscale-operator"
-      # nodeSelector:
-      #   kubernetes.io/os: linux
+      # image:
+      #   repo: ghcr.io/tailscale/k8s-operator
+      #   tag: "v1.74.1"
       resources:
         requests:
           cpu: 50m
@@ -39,23 +36,7 @@ spec:
         limits:
           memory: 512Mi
 
-    # proxyConfig contains configuraton that will be applied to any ingress/egress
-    # proxies created by the operator.
-    # https://tailscale.com/kb/1236/kubernetes-operator/#cluster-ingress
-    # https://tailscale.com/kb/1236/kubernetes-operator/#cluster-egress
-    proxyConfig:
-      image:
-        repo: ghcr.io/tailscale/tailscale
-        tag: "v1.64.2"
-        # digest: ""
-      # ACL tag that operator will tag proxies with. Operator must be made owner of
-      # these tags
-      # https://tailscale.com/kb/1236/kubernetes-operator/?q=operator#setting-up-the-kubernetes-operator
-      defaultTags: tag:k8s
-      firewallMode: auto
-
-    # apiServerProxyConfig allows to configure whether the operator should expose
-    # Kubernetes API server.
-    # https://tailscale.com/kb/1236/kubernetes-operator/#accessing-the-kubernetes-control-plane-using-an-api-server-proxy
-    apiServerProxyConfig:
-      mode: "true" # "true", "false", "noauth"
+    # proxyConfig:
+    #   image:
+    #     repo: ghcr.io/tailscale/tailscale
+    #     tag: "v1.74.1"
