@@ -1,0 +1,101 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+vars:
+  GITHUB_DEPLOY_KEY_FILE: '{{.KUBERNETES_DIR}}/bootstrap/flux/github-deploy-key.sops.yaml'
+  TALHELPER_CLUSTER_DIR: '{{.KUBERNETES_DIR}}/bootstrap/talos/clusterconfig'
+  TALHELPER_SECRET_FILE: '{{.KUBERNETES_DIR}}/bootstrap/talos/talsecret.sops.yaml'
+  TALHELPER_CONFIG_FILE: '{{.KUBERNETES_DIR}}/bootstrap/talos/talconfig.yaml'
+
+env:
+  TALOSCONFIG: '{{.TALHELPER_CLUSTER_DIR}}/talosconfig'
+
+tasks:
+
+  talos:
+    desc: Bootstrap the Talos cluster
+    dir: "{{.KUBERNETES_DIR}}/bootstrap/talos"
+    cmds:
+      # - '{{if eq .TALHELPER_SECRET_EXISTS "false"}}talhelper gensecret > {{.TALHELPER_SECRET_FILE}}{{end}}'
+      # - '{{if eq .TALHELPER_SECRET_EXISTS "false"}}sops --encrypt --in-place {{.TALHELPER_SECRET_FILE}}{{end}}'
+      - op run --env-file={{.TALHELPER_SECRET_ENV_FILE}} -- talhelper genconfig --config-file {{.TALHELPER_CONFIG_FILE}} --secret-file {{.TALHELPER_SECRET_FILE}} --out-dir {{.TALHELPER_CLUSTER_DIR}}
+      - talhelper gencommand apply --config-file {{.TALHELPER_CONFIG_FILE}} --out-dir {{.TALHELPER_CLUSTER_DIR}} --extra-flags="--insecure" | bash
+      - until talhelper gencommand bootstrap --config-file {{.TALHELPER_CONFIG_FILE}} --out-dir {{.TALHELPER_CLUSTER_DIR}} | bash; do sleep 10; done
+      - until talhelper gencommand kubeconfig --config-file {{.TALHELPER_CONFIG_FILE}} --out-dir {{.TALHELPER_CLUSTER_DIR}} --extra-flags="{{.ROOT_DIR}} --force" | bash; do sleep 10; done
+      - task: install-helm-apps
+      - talosctl health --server=false
+    preconditions:
+      - msg: Missing talhelper config file
+        sh: test -f {{.TALHELPER_CONFIG_FILE}}
+      - msg: Missing 1Password CLI access token environment variable
+        sh: test -n "$OP_SERVICE_ACCOUNT_TOKEN"
+      - msg: Missing 1Password vault access
+        sh: op item get talos --vault HomeOps
+
+  flux:
+    desc: Bootstrap Flux into a Kubernetes cluster
+    cmds:
+      # Install private github access key
+      - '{{if eq .GITHUB_DEPLOY_KEY_EXISTS "true"}}kubectl create namespace flux-system --dry-run=client -o yaml | kubectl apply --filename -{{end}}'
+      - '{{if eq .GITHUB_DEPLOY_KEY_EXISTS "true"}}sops exec-file {{.GITHUB_DEPLOY_KEY_FILE}} "kubectl apply --server-side --filename {}"{{end}}'
+      # Install Flux
+      - kubectl apply --kubeconfig {{.KUBECONFIG_FILE}} --server-side --kustomize {{.KUBERNETES_DIR}}/bootstrap/flux
+      - '{{if eq .SOPS_SECRET_EXISTS "false"}}cat {{.SOPS_AGE_KEY_FILE}} | kubectl --namespace flux-system create secret generic sops-age --from-file=age.agekey=/dev/stdin{{end}}'
+      - sops exec-file {{.KUBERNETES_DIR}}/flux/vars/cluster-secrets.sops.yaml "kubectl apply --server-side --filename {}"
+      # Install external-secrets secret
+      - kubectl create namespace external-secrets --dry-run=client -o yaml | kubectl apply --filename -
+      - op read op://HomeOps/onepassword-connect/k8-secret | kubectl apply --kubeconfig {{.KUBECONFIG_FILE}} --server-side --filename -
+      # Install Flux resources
+      - kubectl apply --kubeconfig {{.KUBECONFIG_FILE}} --server-side --filename {{.KUBERNETES_DIR}}/flux/vars/cluster-settings.yaml
+      - kubectl apply --kubeconfig {{.KUBECONFIG_FILE}} --server-side --kustomize {{.KUBERNETES_DIR}}/flux/config
+    vars:
+      GITHUB_DEPLOY_KEY_EXISTS:
+        sh: test -f {{.GITHUB_DEPLOY_KEY_FILE}} && echo true || echo false
+      SOPS_SECRET_EXISTS:
+        sh: kubectl --namespace flux-system get secret sops-age &>/dev/null && echo true || echo false
+    preconditions:
+      - msg: Missing kubeconfig
+        sh: test -f {{.KUBECONFIG_FILE}}
+      - msg: Missing Sops Age key file
+        sh: test -f {{.AGE_FILE}}
+      - msg: Missing 1Password CLI access token environment variable
+        sh: test -n "$OP_SERVICE_ACCOUNT_TOKEN"
+      - msg: Missing Github deploy key secret
+        sh: op read op://HomeOps/github-deploy-key/k8-secret
+      - msg: Missing external-secrets deploy key secret
+        sh: op read op://HomeOps/onepassword-connect/k8-secret
+
+  install-helm-apps:
+    internal: true
+    desc: Bootstrap core apps needed for Talos
+    dir: "{{.KUBERNETES_DIR}}/bootstrap/talos"
+    cmds:
+      - until kubectl --kubeconfig {{.KUBECONFIG_FILE}} wait --for=condition=Ready=False nodes --all --timeout=600s; do sleep 10; done
+      - helmfile --kubeconfig {{.KUBECONFIG_FILE}} --file {{.KUBERNETES_DIR}}/bootstrap/helmfile.yaml apply --skip-diff-on-install --suppress-diff
+      - until kubectl --kubeconfig {{.KUBECONFIG_FILE}} wait --for=condition=Ready nodes --all --timeout=600s; do sleep 10; done
+    preconditions:
+      - msg: Missing kubeconfig
+        sh: test -f {{.KUBECONFIG_FILE}}
+      - msg: Missing helmfile
+        sh: test -f {{.KUBERNETES_DIR}}/bootstrap/helmfile.yaml
+
+  age-keygen:
+    desc: Bootstrap the Sops Age key
+    cmd: age-keygen --output {{.SOPS_AGE_KEY_FILE}}
+    status:
+      - test -f {{.SOPS_AGE_KEY_FILE}}
+
+  encrypt:
+    desc: Encrypt all Kubernetes SOPS secrets
+    cmd: |
+      find "{{.KUBERNETES_DIR}}" -type f -name "*.sops.*" | while read -r file; do
+          if sops filestatus "${file}" | jq --exit-status ".encrypted == false" &>/dev/null; then
+              sops --encrypt --in-place "${file}"
+          fi
+      done
+    preconditions:
+      - msg: Missing Sops config file
+        sh: test -f {{.SOPS_CONFIG_FILE}}
+      - msg: Missing Sops Age key file
+        sh: test -f {{.SOPS_AGE_KEY_FILE}}
