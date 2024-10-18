@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
-  "name": "Flux Cluster Template",
+  "name": "Home Ops",
   "dockerFile": "Dockerfile",
   "initializeCommand": "docker pull ghcr.io/onedr0p/cluster-template/devcontainer:latest",
   "postCreateCommand": {
