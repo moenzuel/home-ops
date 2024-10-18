@@ -8,5 +8,14 @@
   },
   "postStartCommand": {
     "git": "git config --global --add safe.directory ${containerWorkspaceFolder}"
-  }
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/home-ops,type=bind",
+  "workspaceFolder": "/workspaces/home-ops",
+  "mounts": [
+    {
+      "source": "${localWorkspaceFolder}/../home-ops-private",
+      "target": "/workspaces/home-ops-private",
+      "type": "bind"
+    }
+  ]
 }
