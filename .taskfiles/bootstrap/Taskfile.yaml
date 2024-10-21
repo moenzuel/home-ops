@@ -38,8 +38,8 @@ tasks:
     desc: Bootstrap Flux into a Kubernetes cluster
     cmds:
       # Install private github access key
-      - '{{if eq .GITHUB_DEPLOY_KEY_EXISTS "true"}}kubectl create namespace flux-system --dry-run=client -o yaml | kubectl apply --filename -{{end}}'
-      - '{{if eq .GITHUB_DEPLOY_KEY_EXISTS "true"}}sops exec-file {{.GITHUB_DEPLOY_KEY_FILE}} "kubectl apply --server-side --filename {}"{{end}}'
+      - kubectl create namespace flux-system --dry-run=client -o yaml | kubectl apply --filename -
+      - op read op://HomeOps/github-deploy-key/k8-secret | kubectl apply --server-side --filename -
       # Install Flux
       - kubectl apply --server-side --kustomize {{.KUBERNETES_DIR}}/bootstrap/flux
       - '{{if eq .SOPS_SECRET_EXISTS "false"}}cat {{.SOPS_AGE_KEY_FILE}} | kubectl --namespace flux-system create secret generic sops-age --from-file=age.agekey=/dev/stdin{{end}}'
@@ -51,8 +51,6 @@ tasks:
       - kubectl apply --server-side --filename {{.KUBERNETES_DIR}}/flux/vars/cluster-settings.yaml
       - kubectl apply --server-side --kustomize {{.KUBERNETES_DIR}}/flux/config
     vars:
-      GITHUB_DEPLOY_KEY_EXISTS:
-        sh: test -f {{.GITHUB_DEPLOY_KEY_FILE}} && echo true || echo false
       SOPS_SECRET_EXISTS:
         sh: kubectl --namespace flux-system get secret sops-age &>/dev/null && echo true || echo false
     preconditions:
