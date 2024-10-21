@@ -41,15 +41,15 @@ tasks:
       - '{{if eq .GITHUB_DEPLOY_KEY_EXISTS "true"}}kubectl create namespace flux-system --dry-run=client -o yaml | kubectl apply --filename -{{end}}'
       - '{{if eq .GITHUB_DEPLOY_KEY_EXISTS "true"}}sops exec-file {{.GITHUB_DEPLOY_KEY_FILE}} "kubectl apply --server-side --filename {}"{{end}}'
       # Install Flux
-      - kubectl apply --kubeconfig {{.KUBECONFIG_FILE}} --server-side --kustomize {{.KUBERNETES_DIR}}/bootstrap/flux
+      - kubectl apply --server-side --kustomize {{.KUBERNETES_DIR}}/bootstrap/flux
       - '{{if eq .SOPS_SECRET_EXISTS "false"}}cat {{.SOPS_AGE_KEY_FILE}} | kubectl --namespace flux-system create secret generic sops-age --from-file=age.agekey=/dev/stdin{{end}}'
       - sops exec-file {{.KUBERNETES_DIR}}/flux/vars/cluster-secrets.sops.yaml "kubectl apply --server-side --filename {}"
       # Install external-secrets secret
       - kubectl create namespace external-secrets --dry-run=client -o yaml | kubectl apply --filename -
-      - op read op://HomeOps/onepassword-connect/k8-secret | kubectl apply --kubeconfig {{.KUBECONFIG_FILE}} --server-side --filename -
+      - op read op://HomeOps/onepassword-connect/k8-secret | kubectl apply --server-side --filename -
       # Install Flux resources
-      - kubectl apply --kubeconfig {{.KUBECONFIG_FILE}} --server-side --filename {{.KUBERNETES_DIR}}/flux/vars/cluster-settings.yaml
-      - kubectl apply --kubeconfig {{.KUBECONFIG_FILE}} --server-side --kustomize {{.KUBERNETES_DIR}}/flux/config
+      - kubectl apply --server-side --filename {{.KUBERNETES_DIR}}/flux/vars/cluster-settings.yaml
+      - kubectl apply --server-side --kustomize {{.KUBERNETES_DIR}}/flux/config
     vars:
       GITHUB_DEPLOY_KEY_EXISTS:
         sh: test -f {{.GITHUB_DEPLOY_KEY_FILE}} && echo true || echo false
@@ -57,7 +57,7 @@ tasks:
         sh: kubectl --namespace flux-system get secret sops-age &>/dev/null && echo true || echo false
     preconditions:
       - msg: Missing kubeconfig
-        sh: test -f {{.KUBECONFIG_FILE}}
+        sh: test -f {{.KUBECONFIG}}
       - msg: Missing Sops Age key file
         sh: test -f {{.AGE_FILE}}
       - msg: Missing 1Password CLI access token environment variable
@@ -77,7 +77,7 @@ tasks:
       - until kubectl wait --for=condition=Ready nodes --all --timeout=600s; do sleep 10; done
     preconditions:
       - msg: Missing kubeconfig
-        sh: test -f {{.KUBECONFIG_FILE}}
+        sh: test -f {{.KUBECONFIG}}
       - msg: Missing helmfile
         sh: test -f {{.KUBERNETES_DIR}}/bootstrap/helmfile.yaml
 
