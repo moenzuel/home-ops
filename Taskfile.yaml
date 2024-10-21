@@ -17,12 +17,12 @@ env:
   VIRTUAL_ENV: '{{.ROOT_DIR}}/.venv'
 
 includes:
-  bootstrap: .taskfiles/Bootstrap
-  kubernetes: .taskfiles/Kubernetes
-  talos: .taskfiles/Talos
-  workstation: .taskfiles/Workstation
+  bootstrap: .taskfiles/bootstrap
+  kubernetes: .taskfiles/kubernetes
+  talos: .taskfiles/talos
+  workstation: .taskfiles/workstation
   user:
-    taskfile: .taskfiles/User
+    taskfile: .taskfiles/user
     optional: true
 
 tasks:
