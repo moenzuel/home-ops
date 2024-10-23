@@ -26,19 +26,19 @@ metadata:
   namespace: flux-system
 spec:
   interval: 30m
-  path: ./kubernetes/flux
+  path: ./kubernetes/apps/default
   prune: true
   wait: false
   sourceRef:
     kind: GitRepository
     name: home-kubernetes-private
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
-  postBuild:
-    substituteFrom:
-      - kind: ConfigMap
-        name: cluster-settings
-      - kind: Secret
-        name: cluster-secrets
+  # decryption:
+  #   provider: sops
+  #   secretRef:
+  #     name: sops-age
+  # postBuild:
+  #   substituteFrom:
+  #     - kind: ConfigMap
+  #       name: cluster-settings
+  #     - kind: Secret
+  #       name: cluster-secrets
