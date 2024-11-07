@@ -10,6 +10,8 @@ vars:
   MAKEJINJA_CONFIG_FILE: '{{.ROOT_DIR}}/makejinja.toml'
   SOPS_CONFIG_FILE: '{{.ROOT_DIR}}/.sops.yaml'
 
+dotenv: ['.1p.env']
+
 env:
   KUBECONFIG: '{{.ROOT_DIR}}/kubeconfig'
   PYTHONDONTWRITEBYTECODE: '1'

@@ -34,6 +34,7 @@ tasks:
       - msg: Missing 1Password vault access
         sh: op item get talos --vault HomeOps
       - which talhelper
+      - which talosctl
 
   flux:
     desc: Bootstrap Flux into a Kubernetes cluster

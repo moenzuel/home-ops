@@ -24,3 +24,5 @@ Brewfile.lock.json
 wiki
 # Bootstrap
 /config.yaml
+# 1Password CLI
+.1p.env
