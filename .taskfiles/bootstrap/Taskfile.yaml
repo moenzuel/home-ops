@@ -33,6 +33,7 @@ tasks:
         sh: test -n "$OP_SERVICE_ACCOUNT_TOKEN"
       - msg: Missing 1Password vault access
         sh: op item get talos --vault HomeOps
+      - which talhelper
 
   flux:
     desc: Bootstrap Flux into a Kubernetes cluster
